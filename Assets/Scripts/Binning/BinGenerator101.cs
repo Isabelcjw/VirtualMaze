@@ -1,0 +1,689 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using System.Linq;
+using System;
+using System.Globalization;
+using Unity.Jobs;
+using System.Runtime.InteropServices;
+
+
+public class BinGenerator101 : MonoBehaviour
+{  
+   public Camera mainCamera;
+   private List<GameObject> AllObjects = new List<GameObject>();
+   private List<int> ObjOffset = new List<int>();
+   private Dictionary<string, int> ObjToOffset = new Dictionary<string, int>();
+   private int Offset;
+   private float binSize;
+   private int binNum;
+   public Dictionary<string,Vector3> BottomLeftPos = new Dictionary<string, Vector3>();
+   public Dictionary<string, int> numBinsWidth = new Dictionary<string, int>();
+   private List <string[]> ObjInScene = new List<string[]>();
+   public int numOfBinsForFloorLength; //Default 40 
+   public float FloorLength; // 25 unity units
+   public string OutputFile;
+   public string InputFile;
+   public int radius;
+   public int PixelsPerRay;
+   
+   private string[] walltag;
+   private string[] greenpillartag;
+   private string[] bluepillartag; 
+   private string[] redpillartag; 
+   private string[] yellowpillartag; 
+   private string[] catPlaneVertical; 
+   private string[] catPlaneHorizontal; 
+   private string[] pigPlaneHorizontal; 
+   private string[] pigPlaneVertical; 
+   private string[] crocodilePlaneHorizontal; 
+   private string[] crocodilePlaneVertical; 
+   private string[] hippoPlaneHorizontal; 
+   private string[] hippoPlaneVertical; 
+   private string[] rabbitPlaneHorizontal;
+   private string[] rabbitPlaneVertical; 
+   private string[] foxPlaneHorizontal; 
+   private string[] foxPlaneVertical; 
+
+   //stores all data without "Sampled Ignored" data 
+   private List<string[]> csvData = new List<string[]>();
+   private List<string> Objects = new List<string>();
+   private List<Vector3> Gazecoordinates = new List<Vector3>();
+   private List<int> Timestamp = new List<int>();
+   private List<float> camRotation = new List<float>();
+   private List<Vector3> camPosition = new List<Vector3>();
+   
+   //stores data of objects within the radius density after raycasting 
+   private List<int> AllTimestamps = new List<int>();
+   private List<string> AllObjecthit = new List<string>();
+   private List<Vector3> AllObjecthitpos = new List<Vector3>();
+
+   //stores data of filtered replicated bin numbers 
+   private List<int> Binnumbers = new List<int>();
+   private List<int> Timestamps = new List<int>();
+   private List<string> Objecthit = new List<string>();
+   private List<Vector3> Objecthitpos = new List<Vector3>();
+
+   
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    // Tags to search for
+    //tags are called in order that they are binned from west clockwise
+    string[] Ground = {"Ground"};
+    string[] Ceiling = {"Ceiling"};
+    walltag = new string[] {"wall_01", "wall_02", "wall_03", "wall_04", "wall_05", "wall_06"}; 
+    greenpillartag = new string[] {"m_wall_5", "m_wall_26", "m_wall_25", "m_wall_1"}; 
+    bluepillartag = new string[] {"m_wall_21", "m_wall_29", "m_wall_6", "m_wall_10"};
+    redpillartag = new string[] {"m_wall_3", "m_wall_15", "m_wall_24", "m_wall_4"};
+    yellowpillartag = new string [] {"m_wall_20", "m_wall_12", "m_wall_8", "m_wall_7"};
+    catPlaneHorizontal = new string[] {"Plane_1", "Plane_2"};
+    catPlaneVertical = new string[] { "Plane_3", "Plane_4", "Plane_5", "Plane_6"};
+    pigPlaneHorizontal = new string[] { "Plane_7", "Plane_8"};
+    pigPlaneVertical = new string[] {"Plane_9", "Plane_10", "Plane_11", "Plane_12"};
+    crocodilePlaneHorizontal = new string[] {"Plane_13", "Plane_14"};
+    crocodilePlaneVertical = new string[] { "Plane_15", "Plane_16", "Plane_17", "Plane_18"};
+    hippoPlaneHorizontal = new string[] {"Plane_19", "Plane_20"};
+    hippoPlaneVertical = new string[] {"Plane_21", "Plane_22", "Plane_23", "Plane_24"};
+    rabbitPlaneHorizontal =new string[] {"Plane_25", "Plane_26"};
+    rabbitPlaneVertical = new string[] {"Plane_27", "Plane_28", "Plane_29", "Plane_30"};
+    foxPlaneHorizontal = new string[] {"Plane_31", "Plane_32"};
+    foxPlaneVertical = new string[] {"Plane_33", "Plane_34", "Plane_35", "Plane_36"};
+    
+    ObjInScene.Add(Ground);
+    ObjInScene.Add(Ceiling);
+    ObjInScene.Add(walltag);
+    ObjInScene.Add(greenpillartag);
+    ObjInScene.Add(bluepillartag);
+    ObjInScene.Add(redpillartag);
+    ObjInScene.Add(yellowpillartag);
+    ObjInScene.Add(catPlaneHorizontal);
+    ObjInScene.Add(catPlaneVertical);
+    ObjInScene.Add(pigPlaneHorizontal);
+    ObjInScene.Add(pigPlaneVertical);
+    ObjInScene.Add(crocodilePlaneHorizontal);
+    ObjInScene.Add(crocodilePlaneVertical);
+    ObjInScene.Add(hippoPlaneHorizontal);
+    ObjInScene.Add(hippoPlaneVertical);
+    ObjInScene.Add(rabbitPlaneHorizontal);
+    ObjInScene.Add(rabbitPlaneVertical);
+    ObjInScene.Add(foxPlaneHorizontal);
+    ObjInScene.Add(foxPlaneVertical);
+
+    foreach(string[] obj in ObjInScene){
+
+        foreach(string tagobj in obj){
+
+        GameObject Object = GameObject.FindWithTag(tagobj);
+
+        if(Object != null){
+            AllObjects.Add(Object);
+        }
+      }
+    }
+
+    binSize = FloorLength/numOfBinsForFloorLength;
+
+    ObjOffset.Add(2); //Cue and Hint Image 
+    Offset = 2;
+
+   
+    foreach(GameObject obj in AllObjects){
+        
+        Renderer renderer = obj.GetComponent<Renderer>();
+        Collider collider = obj.GetComponent<Collider>();
+
+        if(renderer != null && collider != null){
+
+        //1. Get the Object Position (in 3D world coordinate) and Size 
+
+        Bounds bounds = obj.GetComponent<Renderer>().bounds; 
+        Vector3 size = bounds.size;
+        Vector3 objectPosition = obj.transform.position;
+        Quaternion objectRotation = obj.transform.rotation;
+
+        //2. Gets the Number of Bins required to fill the surface of each object to determine the offset 
+        //Note: this code only works on surfaces of gameobjects (i.e., 2D). Objects cannot have all x,y,z dimensions (have to adjust accordingly)
+        
+        // Uses vector to get the axes and the correct reference position of the object. 
+        // Note (Double Tee Maze): For the maze walls, the blue axes (of the object) should be facing the west and the green axes should be upwards 
+        float StepX = Mathf.Sign(obj.transform.forward.x);
+        float StepY = Mathf.Sign(obj.transform.forward.y);
+        float StepZ = Mathf.Sign(obj.transform.forward.z); 
+
+        float BottomLeftPosX = Mathf.Round((objectPosition.x -  StepX * (size.x/2))*1000f)/1000f;
+        float BottomLeftPosY = Mathf.Round((objectPosition.y -  StepY * (size.y/2))*1000f)/1000f;
+        float BottomLeftPosZ = Mathf.Round((objectPosition.z -  StepZ * (size.z/2))*1000f)/1000f; 
+
+        BottomLeftPos.Add(obj.name, new Vector3(BottomLeftPosX, BottomLeftPosY, BottomLeftPosZ));
+
+        //3. Finds the number of bins in the x,y,z direction 
+        int numBinsX = Mathf.CeilToInt((Mathf.Round(size.x*1000f)/1000f)/ binSize); 
+        int numBinsY = Mathf.CeilToInt((Mathf.Round(size.y*1000f)/1000f)/ binSize);
+        int numBinsZ = Mathf.CeilToInt((Mathf.Round(size.z*1000f)/1000f)/ binSize);
+
+    
+        if(Mathf.Approximately(numBinsX, 0)){  //ZPos (North) & ZNeg(South)
+            Offset += numBinsY * numBinsZ;
+            numBinsWidth.Add(obj.name, numBinsZ);
+        } 
+        else if(Mathf.Approximately(numBinsY,0)){ //Ground and Ceiling
+            Offset += numBinsX * numBinsZ;
+            numBinsWidth.Add(obj.name, numBinsX);
+        }
+        else if(Mathf.Approximately(numBinsZ,0)){ // XPos(East) and XNeg (West)
+            Offset += numBinsX * numBinsY;
+            numBinsWidth.Add(obj.name, numBinsX);
+        }
+
+        ObjOffset.Add(Offset);
+    
+       }
+
+        ObjToOffset.Add(obj.name, ObjOffset[ObjOffset.Count -2]); // stores object name: offset value in Dictionary   
+
+    }
+
+    /*foreach(KeyValuePair <string, int> kvp in ObjToOffset){
+        Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
+    }*/
+
+
+    /*foreach(KeyValuePair <string, Vector3> kvp in BottomLeftPos){
+        Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
+    }*/
+
+     ReadCSVFile(InputFile);
+
+
+    }
+
+    private void ReadCSVFile(string file)
+    {
+
+           if (!File.Exists(file)){
+            Debug.LogError("CSV file not found!");
+            return;
+           }
+
+        using (StreamReader reader = new StreamReader(file)){
+            string line;
+
+            while ((line = reader.ReadLine()) != null)
+            { 
+                    if(!line.Contains("Sample Ignored")){ //filter data containing "Sampled Ignored"
+                    string[] rowData = line.Split(',');
+                    csvData.Add(rowData); 
+
+                    }
+            }
+
+                    foreach(string[] values in csvData){
+
+                        int time = int.Parse(values[1].Trim());
+                        Timestamp.Add(time);
+
+                        string objectname = values[2].Trim();
+                        Objects.Add(objectname);
+
+                        CultureInfo culture = CultureInfo.InvariantCulture;
+
+                        float.TryParse(values[5], NumberStyles.Float, culture, out float xcamposition);
+
+                        float.TryParse(values[6], NumberStyles.Float, culture, out float ycamposition);
+
+                        float.TryParse(values[7], NumberStyles.Float, culture, out float zcamposition);
+                        
+                        float.TryParse(values[8], NumberStyles.Float, culture, out float ycamrotation);
+                        camRotation.Add(ycamrotation);
+
+                        float.TryParse(values[9], NumberStyles.Float, culture, out float xcoordinate);
+                        //Debug.Log("x: " + xcoordinate);
+
+                        float.TryParse(values[10], NumberStyles.Float, culture, out float ycoordinate);
+                        //Debug.Log("y: " + ycoordinate);
+                
+                        float.TryParse(values[11], NumberStyles.Float, culture, out float zcoordinate);
+                        //Debug.Log("z: " + zcoordinate);
+
+                        Vector3 Position = new Vector3(xcamposition, ycamposition + 1.35f, zcamposition);
+                        camPosition.Add(Position);
+
+                
+                        Vector3 coordinate = new Vector3(xcoordinate, ycoordinate, zcoordinate);
+                        Gazecoordinates.Add(coordinate);
+                    
+                    }
+            
+        }
+
+         FindObjectsInGazeRadius(Timestamp, Objects, camPosition, camRotation, Gazecoordinates);
+
+        //BinComputation(AllObjecttype.ToArray(), Allgazecoordinates.ToArray(), Alltimestamps.ToArray());
+        /*for(int i =0; i < Timestamps.Count; i++){
+
+            Debug.Log(Timestamps[i] + " " +  Objects[i] + " " + Gazecoordinates[i] + " " + camPosition[i] + " " + camRotation[i]);
+        }*/
+    }
+
+    private void FindObjectsInGazeRadius(List<int> Timestamps, List<string> Objectname, List<Vector3> camPosition, List<float> camRotation ,List<Vector3> Gazecoord){
+
+
+        for(int i = 0; i < Timestamps.Count; i++){
+
+            int Raycounter = PixelsPerRay;
+
+            if(Objectname[i] == "CueImage" || Objectname[i] == "HintImage"){
+
+                AllTimestamps.Add(Timestamps[i]);
+                AllObjecthit.Add(Objectname[i]);
+                AllObjecthitpos.Add(Gazecoord[i]);
+
+
+            }else{
+                
+                StartCoroutine(MoveCameraThroughPositions(camPosition[i], camRotation[i]));
+                Vector3 viewportPoint = mainCamera.WorldToViewportPoint(Gazecoord[i]);
+                
+
+                Vector2 pixelCoords = new Vector2(viewportPoint.x * Screen.width, viewportPoint.y * Screen.height);
+
+                for(float x = pixelCoords.x - radius; x< pixelCoords.x + radius; x++){
+                    
+                    for(float y = pixelCoords.y - radius; y< pixelCoords.y + radius; y++){
+
+                    Vector2 newCoord = new Vector2 (x, y);
+
+                    //if(Vector2.Distance(pixelCoords, newCoord) <= radius){
+
+                        if(Raycounter % PixelsPerRay ==0){
+
+                        Ray ray = mainCamera.ScreenPointToRay(new Vector3(newCoord.x, newCoord.y, 0f));
+                        RaycastHit hit; 
+
+                        //Debug.Log(newCoord + " " + Raycounter + " " + Timestamps[i]);
+
+                        if(Physics.Raycast(ray, out hit)){
+
+                         AllTimestamps.Add(Timestamps[i]);
+
+                         GameObject hitObject = hit.collider.gameObject;
+                         string Object = hitObject.name; 
+                         AllObjecthit.Add(Object);
+
+                         Vector3 hitWorldCoordinate = hit.point; 
+                         AllObjecthitpos.Add(hitWorldCoordinate);
+
+
+                        }
+                    }
+
+                    Raycounter++;
+
+                  }
+                
+                }
+
+            }
+        }
+
+        BinComputation(AllObjecthit, AllObjecthitpos, AllTimestamps);
+    }
+
+    System.Collections.IEnumerator MoveCameraThroughPositions(Vector3 camPosition, float camRotation){
+
+            mainCamera.transform.position = new Vector3(camPosition.x, camPosition.y + 1.35f, camPosition.z);
+
+            Vector3 newRotation = new Vector3 (12.5f, camRotation, 0f); 
+            mainCamera.transform.eulerAngles = newRotation;
+
+            yield return new WaitForSeconds(2.0f);
+
+
+    }
+
+    private void BinComputation(List<string> AllObjectname, List<Vector3> AllCoordinates, List<int> AllTimestamps){
+
+     for(int i =0; i<AllTimestamps.Count; i++){
+
+        string objname = AllObjectname[i];
+        int timestamp = AllTimestamps[i];
+        float xcoordinate = Mathf.Round(AllCoordinates[i].x * 1000f)/1000f;
+        float ycoordinate = Mathf.Round(AllCoordinates[i].y * 1000f)/1000f;
+        float zcoordinate = Mathf.Round(AllCoordinates[i].z * 1000f)/1000f;
+        Vector3 pos = new Vector3 (xcoordinate,ycoordinate,zcoordinate);
+        
+
+        switch(objname){
+
+        case "CueImage": 
+                    binNum = 1;
+                    break;
+        case "HintImage": 
+                    binNum = 2;
+                    break;
+        case "Ground": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Ground"], ObjToOffset);
+                    break;
+
+        case "Ceiling": 
+                    int XBinNum = Mathf.CeilToInt(Mathf.Abs(pos.x - BottomLeftPos["Ceiling"].x)/binSize);
+                    int ZBinNum = Mathf.CeilToInt(Mathf.Abs(pos.z - BottomLeftPos["Ceiling"].z)/binSize);
+                    binNum = (numBinsWidth["Ceiling"] - ZBinNum) * numBinsWidth["Ceiling"] + XBinNum + ObjToOffset["Ceiling"];
+                    break;
+
+        case "wall_01":
+        case "wall_02":
+        case "wall_03": 
+        case "wall_04":
+        case "wall_05":
+        case "wall_06":
+
+                    int[] wallBinsWidth = walltag
+                                        .Where(key => numBinsWidth.ContainsKey(key))
+                                        .Select(key=> numBinsWidth[key])
+                                        .ToArray();
+
+                    binNum = WallTypeBinning(objname, pos, walltag, BottomLeftPos, binSize, wallBinsWidth, ObjToOffset);
+                    break;
+
+        case "m_wall_5": 
+        case "m_wall_26": 
+        case "m_wall_25":
+        case "m_wall_1":
+                     //Green pillars 
+                        int[] greenPillarBinsWidth = greenpillartag
+                                                .Where(key => numBinsWidth.ContainsKey(key))
+                                                .Select(key => numBinsWidth[key])
+                                                .ToArray();
+                        binNum = WallTypeBinning(objname, pos, greenpillartag, BottomLeftPos, binSize, greenPillarBinsWidth, ObjToOffset);
+                    break;
+        
+        case "m_wall_21": 
+        case "m_wall_29":
+        case "m_wall_6": 
+        case "m_wall_10":
+                    //Blue Pillars 
+                    int[] bluePillarBinsWidth = bluepillartag
+                                                .Where(key => numBinsWidth.ContainsKey(key))
+                                                .Select(key=> numBinsWidth[key])
+                                                .ToArray();
+                    binNum = WallTypeBinning(objname, pos, bluepillartag, BottomLeftPos, binSize, bluePillarBinsWidth, ObjToOffset);
+                    break; 
+        
+        case "m_wall_3": 
+        case "m_wall_15": 
+        case "m_wall_24": 
+        case "m_wall_4":
+                    //Red Pillars 
+                    int[] redPillarBinsWidth = redpillartag
+                                               .Where(key => numBinsWidth.ContainsKey(key))
+                                               .Select(key => numBinsWidth[key])
+                                               .ToArray();
+                    binNum = WallTypeBinning(objname, pos, redpillartag, BottomLeftPos, binSize, redPillarBinsWidth, ObjToOffset);
+                    break; 
+                
+        case "m_wall_20":
+        case "m_wall_12": 
+        case "m_wall_8": 
+        case "m_wall_7":
+                      //Yellow Pillars 
+                    int[] yellowPillarBinsWidth = yellowpillartag
+                                                  .Where(key => numBinsWidth.ContainsKey(key))
+                                                  .Select(key => numBinsWidth[key])
+                                                  .ToArray();
+                    binNum = WallTypeBinning(objname, pos, yellowpillartag, BottomLeftPos, binSize, yellowPillarBinsWidth, ObjToOffset);
+                    break;
+
+                // Cat Cube Reward
+        case "Plane_1": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_1"], ObjToOffset);
+                    break;
+        case "Plane_2":
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_2"], ObjToOffset);
+                    break;
+        case "Plane_3": 
+        case "Plane_4":
+        case "Plane_5":
+        case "Plane_6": 
+                      
+                    int[] catPlaneBinsWidth =  catPlaneVertical
+                                              .Where(key => numBinsWidth.ContainsKey(key))
+                                              .Select(key => numBinsWidth[key])
+                                              .ToArray();
+                    binNum = WallTypeBinning(objname, pos, catPlaneVertical, BottomLeftPos, binSize, catPlaneBinsWidth, ObjToOffset);  
+                    break; 
+
+                // Pig Cube Reward
+        case "Plane_7": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_7"], ObjToOffset);
+                    break; 
+        case "Plane_8": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_8"], ObjToOffset);
+                    break;
+        case "Plane_9": 
+        case "Plane_10": 
+        case "Plane_11": 
+        case "Plane_12":
+                    int [] pigPlaneBinsWidth = pigPlaneVertical
+                                               .Where(key => numBinsWidth.ContainsKey(key))
+                                               .Select(key => numBinsWidth[key])
+                                               .ToArray();
+                    binNum = WallTypeBinning(objname, pos, pigPlaneVertical, BottomLeftPos, binSize, pigPlaneBinsWidth, ObjToOffset);
+                    break;
+
+                //Crocodile Cube Reward
+        case "Plane_13": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_13"], ObjToOffset); 
+                    break; 
+        case "Plane_14": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_14"], ObjToOffset);
+                    break;
+        case "Plane_15": 
+        case "Plane_16":
+        case "Plane_17": 
+        case "Plane_18": 
+                    int[] crocodilePlaneBinsWidth = crocodilePlaneVertical
+                                                    .Where(key => numBinsWidth.ContainsKey(key))
+                                                    .Select(key => numBinsWidth[key])
+                                                    .ToArray();             
+                    binNum = WallTypeBinning(objname, pos, crocodilePlaneVertical, BottomLeftPos, binSize, crocodilePlaneBinsWidth, ObjToOffset);
+                    break; 
+
+                //Hippo Cube Reward
+        case "Plane_19": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_19"], ObjToOffset); 
+                    break; 
+        case "Plane_20": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_20"], ObjToOffset); 
+                    break; 
+        case "Plane_21": 
+        case "Plane_22": 
+        case "Plane_23": 
+        case "Plane_24": 
+                    int[] hippoPlaneBinsWidth = hippoPlaneVertical
+                                                .Where(key => numBinsWidth.ContainsKey(key))
+                                                .Select(key => numBinsWidth[key])
+                                                .ToArray();
+                    binNum = WallTypeBinning(objname, pos, hippoPlaneVertical, BottomLeftPos, binSize, hippoPlaneBinsWidth, ObjToOffset);
+                    break; 
+
+                // Rabbit Reward Cube
+        case "Plane_25": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_25"], ObjToOffset);
+                    break; 
+        case "Plane_26": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_26"], ObjToOffset);
+                    break; 
+        case "Plane_27": 
+        case "Plane_28": 
+        case "Plane_29": 
+        case "Plane_30": 
+                    int[] rabbitPlaneBinsWidth = rabbitPlaneVertical
+                                                .Where(key => numBinsWidth.ContainsKey(key))
+                                                .Select(key => numBinsWidth[key])
+                                                .ToArray();
+                    binNum = WallTypeBinning(objname, pos, rabbitPlaneVertical, BottomLeftPos, binSize,rabbitPlaneBinsWidth, ObjToOffset);
+                    break;
+
+                //Fox Cube Reward
+        case "Plane_31": 
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_31"], ObjToOffset);
+                    break; 
+        case "Plane_32":
+                    binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_32"], ObjToOffset); 
+                    break; 
+        case "Plane_33": 
+        case "Plane_34":
+        case "Plane_35": 
+        case "Plane_36": 
+                    int[] foxPlaneBinsWidth = foxPlaneVertical
+                                              .Where(key => numBinsWidth.ContainsKey(key))
+                                              .Select(key => numBinsWidth[key])
+                                              .ToArray();
+                    binNum = WallTypeBinning(objname, pos, foxPlaneVertical, BottomLeftPos, binSize, foxPlaneBinsWidth, ObjToOffset);
+                    break;
+
+        default: // Gameobject is not found 
+              binNum = -1;
+                break;
+        
+        }
+
+        bool sameTimestamp = Timestamps.Contains(timestamp);
+        bool sameBinnumber = Binnumbers.Contains(binNum);
+
+        if(!Timestamps.Contains(timestamp)){  // Checks if the data of a given timestamp exists in the list 
+
+            Timestamps.Add(AllTimestamps[i]);
+            Binnumbers.Add(binNum);
+            Objecthit.Add(AllObjectname[i]);
+            Objecthitpos.Add(AllCoordinates[i]);
+        }
+
+        else if(Timestamps.Contains(timestamp)){  //If the timestamp already exist, it will check for the same bin number 
+
+            if(sameTimestamp && !sameBinnumber){  // Bin numbers that are not replicated/same will be added to the list 
+
+               Timestamps.Add(AllTimestamps[i]);
+               Binnumbers.Add(binNum);
+               Objecthit.Add(AllObjectname[i]);
+               Objecthitpos.Add(AllCoordinates[i]);
+
+            }
+
+        }
+
+        
+    }
+    
+
+
+    for(int i=0; i< Timestamps.Count; i++ ){
+
+        Debug.Log("Timestamp: " + Timestamps[i] + " " + "Bin Number: " + Binnumbers[i] + " "+ Objecthit[i] + " " + Objecthitpos[i]);
+    }
+
+
+        //WriteCSV(Objects.ToArray(), timestamps.ToArray(), binnumbers.ToArray(), gazecoordinates.ToArray(), OutputFile);
+        
+
+}
+
+void WriteCSV(string[] objecthit, int[] time, int[] binnum, Vector3[] gazecoordinate, string OutputFile){
+        // Create a new StreamWriter to write to the file
+        using (StreamWriter sw = new StreamWriter($"{OutputFile}{Path.DirectorySeparatorChar}data.csv"))
+        {
+            // Loop through the data list and write each array as a line in the CSV file
+            for(int i =0; i< objecthit.Length; i++)
+            {
+                // Join the array elements with commas to create a CSV line
+                string row = time[i] + "," + binnum[i] + "," + objecthit[i] + "," + gazecoordinate[i].x + "," + gazecoordinate[i].y + "," + gazecoordinate[i].z ;
+
+                // Write the line to the file
+                sw.WriteLine(row);
+            }
+        }
+
+        Debug.Log("CSV file created: " + OutputFile);
+    } 
+
+
+public int WallTypeBinning(string objname, Vector3 position, string[] GroupObject, Dictionary<string, Vector3> BottomLeftPos, float binSize, int[] BinsWidth, Dictionary<string, int> ObjToOffset){
+
+        if(objname == GroupObject[0]){
+            
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[0]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                binNum = binRow* BinsWidth.Sum() + ZBinNum + ObjToOffset[GroupObject[0]];
+
+        } else if (objname == GroupObject[1]){ 
+
+                ObjToOffset[GroupObject[1]] = ObjToOffset[GroupObject[0]];
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[1]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
+                binNum =  binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + ObjToOffset[GroupObject[1]];
+           
+        } else if(objname == GroupObject[2]){
+            
+                ObjToOffset[GroupObject[2]] = ObjToOffset[GroupObject[0]];
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[2]]; 
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
+                binNum = binRow * BinsWidth.Sum() + ZBinNum + BinsWidth[0] + BinsWidth[1] + ObjToOffset[GroupObject[2]];
+
+        } else if(objname == GroupObject[3]){
+        
+                ObjToOffset[GroupObject[3]] = ObjToOffset[GroupObject[0]];
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[3]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
+                binNum = binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + ObjToOffset[GroupObject[3]];
+
+    }else if(objname == GroupObject[4]){
+
+                ObjToOffset[GroupObject[4]] = ObjToOffset[GroupObject[0]];
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[4]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
+                binNum = binRow * BinsWidth.Sum() + ZBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3]+ ObjToOffset[GroupObject[4]];
+
+    }else if(objname == GroupObject[5]){
+
+                ObjToOffset[GroupObject[5]] = ObjToOffset[GroupObject[0]];
+                Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[5]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
+                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
+                binNum = binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3] + BinsWidth[4]+ ObjToOffset[GroupObject[5]];
+
+
+    }
+
+     return binNum;
+  
+}
+
+public int PlaneTypeBinning(string objname, Vector3 pos, float binSize, int ObjectWidth, Dictionary<string, int> ObjToOffset){
+
+        Vector3 distFromBottomLeft = pos - BottomLeftPos[objname];
+        int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
+        int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
+        int binRow = Mathf.Max(ZBinNum-1 , 0); //Bin Row cannot be negative
+        binNum = binRow * ObjectWidth + XBinNum + ObjToOffset[objname];
+
+        return binNum; 
+
+}
+
+
+}

@@ -10,6 +10,8 @@ TagManager:
   - LevelController
   - Console
   - Waypoint
+  - Ceiling
+  - Ground
   layers:
   - Default
   - TransparentFX

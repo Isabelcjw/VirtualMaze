@@ -126,7 +126,7 @@ public class ScreenSaver : BasicGUIController {
 
         Debug.Log(numberOfLengthBins);
 
-        int gazeRadius = 50;
+        int gazeRadius = 1;
         if (string.IsNullOrEmpty(gazeRadiusInput.text)) {
             Console.Write("Default radius used");
         }

@@ -12,6 +12,64 @@ TagManager:
   - Waypoint
   - Ceiling
   - Ground
+  - wall_01
+  - wall_02
+  - m_wall_1
+  - m_wall_3
+  - m_wall_4
+  - m_wall_5
+  - m_wall_6
+  - m_wall_7
+  - m_wall_8
+  - m_wall_10
+  - m_wall_12
+  - m_wall_15
+  - m_wall_20
+  - m_wall_21
+  - m_wall_24
+  - m_wall_25
+  - m_wall_26
+  - m_wall_29
+  - wall_03
+  - wall_05
+  - wall_06
+  - wall_04
+  - Plane_1
+  - Plane_2
+  - Plane_3
+  - Plane_4
+  - Plane_5
+  - Plane_6
+  - Plane_7
+  - Plane_8
+  - Plane_9
+  - Plane_10
+  - Plane_11
+  - Plane_12
+  - Plane_13
+  - Plane_14
+  - Plane_15
+  - Plane_16
+  - Plane_17
+  - Plane_18
+  - Plane_19
+  - Plane_20
+  - Plane_21
+  - Plane_22
+  - Plane_23
+  - Plane_24
+  - Plane_25
+  - Plane_26
+  - Plane_27
+  - Plane_28
+  - Plane_29
+  - Plane_30
+  - Plane_31
+  - Plane_32
+  - Plane_33
+  - Plane_34
+  - Plane_35
+  - Plane_36
   layers:
   - Default
   - TransparentFX

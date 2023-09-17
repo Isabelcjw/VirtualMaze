@@ -26,10 +26,7 @@ public class BinGenerator101 : MonoBehaviour
    public float FloorLength; // 25 unity units
    public string OutputFile;
    public string InputFile;
-   public int radius;
-   public int PixelsPerRay;
 
-   
    private string[] walltag;
    private string[] greenpillartag;
    private string[] bluepillartag; 
@@ -53,15 +50,13 @@ public class BinGenerator101 : MonoBehaviour
    private List<string> Objects = new List<string>();
    private List<Vector3> Gazecoordinates = new List<Vector3>();
    private List<int> Timestamp = new List<int>();
-   private List<float> camRotation = new List<float>();
-   private List<Vector3> camPosition = new List<Vector3>();
    
    //stores data of objects within the radius density after raycasting 
    private List<int> AllTimestamps = new List<int>();
    private List<string> AllObjecthit = new List<string>();
    private List<Vector3> AllObjecthitpos = new List<Vector3>();
 
-   //stores data of filtered replicated bin numbers 
+   //stores data of filtered bin numbers 
    private List<int> Binnumbers = new List<int>();
    private List<int> Timestamps = new List<int>();
    private List<string> Objecthit = new List<string>();
@@ -195,7 +190,7 @@ public class BinGenerator101 : MonoBehaviour
 
     ReadCSVFile(InputFile);
 
-    foreach(KeyValuePair <string, int> kvp in ObjToOffset){
+    /*foreach(KeyValuePair <string, int> kvp in ObjToOffset){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }
 
@@ -209,9 +204,6 @@ public class BinGenerator101 : MonoBehaviour
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }*/
 
-
-
-
     }
 
     private void ReadCSVFile(string file)
@@ -224,52 +216,94 @@ public class BinGenerator101 : MonoBehaviour
 
         using (StreamReader reader = new StreamReader(file)){
             string line;
+            int currentBatchSize =0; 
+
 
             while ((line = reader.ReadLine()) != null)
             { 
-                    if(!line.Contains("Sample Ignored")){ //filter data containing "Sampled Ignored"
+                if(!line.Contains("Sample Ignored")){ //filter data containing "Sampled Ignored"
                     string[] rowData = line.Split(',');
                     csvData.Add(rowData); 
-
-                    }
+                
+                }
             }
 
-                    foreach(string[] values in csvData){
+            foreach(string[] values in csvData){
 
-                        int time = int.Parse(values[1].Trim());
-                        Timestamp.Add(time);
+            int time = int.Parse(values[1].Trim());
+            Timestamp.Add(time);
 
-                        string objectname = values[2].Trim();
-                        Objects.Add(objectname);
+            string objectname = values[2].Trim();
+            Objects.Add(objectname);
 
-                        CultureInfo culture = CultureInfo.InvariantCulture;
+            CultureInfo culture = CultureInfo.InvariantCulture;
 
-                        float.TryParse(values[5], NumberStyles.Float, culture, out float xcamposition);
+            float.TryParse(values[9], NumberStyles.Float, culture, out float xcoordinate);
+            //Debug.Log("x: " + xcoordinate);
 
-                        float.TryParse(values[6], NumberStyles.Float, culture, out float ycamposition);
+            float.TryParse(values[10], NumberStyles.Float, culture, out float ycoordinate);
+            //Debug.Log("y: " + ycoordinate);
+                
+            float.TryParse(values[11], NumberStyles.Float, culture, out float zcoordinate);
+            //Debug.Log("z: " + zcoordinate);
 
-                        float.TryParse(values[7], NumberStyles.Float, culture, out float zcamposition);
+                
+            Vector3 coordinate = new Vector3(xcoordinate, ycoordinate, zcoordinate);
+            Gazecoordinates.Add(coordinate);
+
+            }
+
+        } 
+
+        BinComputation(Objects, Gazecoordinates, Timestamp);
+       
+
+        /*for(int i =0; i < Timestamp.Count; i++){
+
+            Debug.Log(Timestamp[i] + " " +  Objects[i] + " " + Gazecoordinates[i]);
+        } */
+
+    }
+
+
+    /*private void ProcessChunk(List<string[]> chunk){
+
+        foreach(string[] values in csvData){
+
+            int time = int.Parse(values[1].Trim());
+            Timestamp.Add(time);
+
+            string objectname = values[2].Trim();
+            Objects.Add(objectname);
+
+            CultureInfo culture = CultureInfo.InvariantCulture;
+
+            float.TryParse(values[5], NumberStyles.Float, culture, out float xcamposition);
+
+            float.TryParse(values[6], NumberStyles.Float, culture, out float ycamposition);
+
+            float.TryParse(values[7], NumberStyles.Float, culture, out float zcamposition);
                         
-                        float.TryParse(values[8], NumberStyles.Float, culture, out float ycamrotation);
-                        camRotation.Add(ycamrotation);
+            float.TryParse(values[8], NumberStyles.Float, culture, out float ycamrotation);
+            camRotation.Add(ycamrotation);
 
-                        float.TryParse(values[9], NumberStyles.Float, culture, out float xcoordinate);
-                        //Debug.Log("x: " + xcoordinate);
+            float.TryParse(values[9], NumberStyles.Float, culture, out float xcoordinate);
+            //Debug.Log("x: " + xcoordinate);
 
-                        float.TryParse(values[10], NumberStyles.Float, culture, out float ycoordinate);
-                        //Debug.Log("y: " + ycoordinate);
+            float.TryParse(values[10], NumberStyles.Float, culture, out float ycoordinate);
+            //Debug.Log("y: " + ycoordinate);
                 
-                        float.TryParse(values[11], NumberStyles.Float, culture, out float zcoordinate);
-                        //Debug.Log("z: " + zcoordinate);
+            float.TryParse(values[11], NumberStyles.Float, culture, out float zcoordinate);
+            //Debug.Log("z: " + zcoordinate);
 
-                        Vector3 Position = new Vector3(xcamposition, ycamposition + 1.35f, zcamposition);
-                        camPosition.Add(Position);
+            Vector3 Position = new Vector3(xcamposition, ycamposition + 1.35f, zcamposition);
+            camPosition.Add(Position);
 
                 
-                        Vector3 coordinate = new Vector3(xcoordinate, ycoordinate, zcoordinate);
-                        Gazecoordinates.Add(coordinate);
+            Vector3 coordinate = new Vector3(xcoordinate, ycoordinate, zcoordinate);
+            Gazecoordinates.Add(coordinate);
                     
-                    }
+            
             
         }
 
@@ -279,10 +313,10 @@ public class BinGenerator101 : MonoBehaviour
         /*for(int i =0; i < Timestamps.Count; i++){
 
             Debug.Log(Timestamps[i] + " " +  Objects[i] + " " + Gazecoordinates[i] + " " + camPosition[i] + " " + camRotation[i]);
-        }*/
-    }
+        }
+    }*/
 
-    private void FindObjectsInGazeRadius(List<int> Timestamps, List<string> Objectname, List<Vector3> camPosition, List<float> camRotation ,List<Vector3> Gazecoord){
+    /*private void FindObjectsInGazeRadius(List<int> Timestamps, List<string> Objectname, List<Vector3> camPosition, List<float> camRotation ,List<Vector3> Gazecoord){
 
 
         for(int i = 0; i < Timestamps.Count; i++){
@@ -356,7 +390,7 @@ public class BinGenerator101 : MonoBehaviour
             yield return new WaitForSeconds(2.0f);
 
 
-    }
+    }*/
 
     private void BinComputation(List<string> AllObjectname, List<Vector3> AllCoordinates, List<int> AllTimestamps){
 
@@ -566,7 +600,15 @@ public class BinGenerator101 : MonoBehaviour
         
         }
 
-        bool sameTimestamp = Timestamps.Contains(timestamp);
+        if(binNum !=-1){
+
+            Timestamps.Add(timestamp);
+            Objecthitpos.Add(pos);
+            Objecthit.Add(objname);
+            Binnumbers.Add(binNum);
+        }
+
+        /*bool sameTimestamp = Timestamps.Contains(timestamp);
         bool sameBinnumber = Binnumbers.Contains(binNum);
 
         if(!Timestamps.Contains(timestamp)){  // Checks if the data of a given timestamp exists in the list 
@@ -588,11 +630,10 @@ public class BinGenerator101 : MonoBehaviour
 
             }
 
-        }
+        }*/
 
         
     }
-
 
     for(int i=0; i< Timestamps.Count; i++ ){
 
@@ -600,7 +641,7 @@ public class BinGenerator101 : MonoBehaviour
     }
 
 
-        //WriteCSV(Objects.ToArray(), timestamps.ToArray(), binnumbers.ToArray(), gazecoordinates.ToArray(), OutputFile);
+        WriteCSV(Objecthit.ToArray(), Timestamps.ToArray(), Binnumbers.ToArray(), Objecthitpos.ToArray(), OutputFile);
         
 
 }
@@ -701,7 +742,7 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
                     
                 );
 
-                //Debug.Log(refposition);
+                //Debug.Log(refposition + objname);
 
                 Vector3 distFromRef = position - refposition;
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
@@ -721,7 +762,7 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
 
                 );
 
-                //Debug.Log(refposition);
+                //Debug.Log(refposition + objname);
 
                 Vector3 distFromRef = position - refposition;
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
@@ -741,7 +782,7 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
 
                 );
 
-                //Debug.Log(refposition);
+                //Debug.Log(refposition + objname);
 
                 Vector3 distFromRef = position - refposition; 
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.y)/binSize);
@@ -761,7 +802,7 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
 
                 );
 
-                //Debug.Log(refposition);
+                //Debug.Log(refposition + objname);
 
                 Vector3 distFromBottomLeft = position - refposition;
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.y)/binSize);

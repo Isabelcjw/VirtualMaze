@@ -15,12 +15,13 @@ public class BinGenerator101 : MonoBehaviour
    private List<GameObject> AllObjects = new List<GameObject>();
    private List<int> ObjOffset = new List<int>();
    private Dictionary<string, int> ObjToOffset = new Dictionary<string, int>();
-   private Dictionary<string, float> ObjLength = new Dictionary<string, float>();
+   private Dictionary<string, float> ObjLength = new Dictionary<string,float>();
    private int Offset;
    private float binSize;
-   private int binNum;
-   public Dictionary<string,Vector3> BottomLeftPos = new Dictionary<string, Vector3>();
-   public Dictionary<string, int> numBinsWidth = new Dictionary<string, int>();
+   private int binNum; 
+   private Dictionary<string,int> numBinsHeight = new Dictionary<string,int>();
+   private Dictionary<string,Vector3> BottomLeftPos = new Dictionary<string, Vector3>();
+   private Dictionary<string, int> numBinsWidth = new Dictionary<string, int>();
    private List <string[]> ObjInScene = new List<string[]>();
    public int numOfBinsForFloorLength; //Default 40 
    public float FloorLength; // 25 unity units
@@ -165,6 +166,7 @@ public class BinGenerator101 : MonoBehaviour
         if(Mathf.Approximately(numBinsX, 0)){  //ZPos (North) & ZNeg(South)
             Offset += numBinsY * numBinsZ;
             numBinsWidth.Add(obj.name, numBinsZ);
+            numBinsHeight.Add(obj.name, numBinsY);
             ObjLength.Add(obj.name,Mathf.Round(size.z));
 
         } 
@@ -176,6 +178,7 @@ public class BinGenerator101 : MonoBehaviour
         else if(Mathf.Approximately(numBinsZ,0)){ // XPos(East) and XNeg (West)
             Offset += numBinsX * numBinsY;
             numBinsWidth.Add(obj.name, numBinsX);
+            numBinsHeight.Add(obj.name, numBinsY);
             ObjLength.Add(obj.name, Mathf.Round(size.x));
         }
 
@@ -188,23 +191,36 @@ public class BinGenerator101 : MonoBehaviour
 
     }
 
-    ReadCSVFile(InputFile);
+     ReadCSVFile(InputFile);
 
     /*foreach(KeyValuePair <string, int> kvp in ObjToOffset){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }
 
 
-    foreach(KeyValuePair <string, Vector3> kvp in BottomLeftPos){
+    /*foreach(KeyValuePair <string, Vector3> kvp in BottomLeftPos){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }
 
 
-    /*foreach(KeyValuePair <string, float> kvp in ObjLength){
+    foreach(KeyValuePair <string, float> kvp in ObjLength){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }*/
 
+    /*foreach(KeyValuePair <string, int> kvp in numBinsHeight){
+
+        Debug.Log("Key: " + kvp.Key + " " + " Value: " + kvp.Value);
     }
+
+    foreach(KeyValuePair <string, int> kvp in numBinsWidth){
+
+        Debug.Log("Key: " + kvp.Key + " " + " Value: " + kvp.Value);
+    }*/
+
+
+    }
+
+
 
     private void ReadCSVFile(string file)
     {
@@ -434,7 +450,7 @@ public class BinGenerator101 : MonoBehaviour
                                         .Select(key=> numBinsWidth[key])
                                         .ToArray();
 
-                    binNum = WallTypeBinning(objname, pos, walltag, BottomLeftPos, binSize, wallBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, walltag, BottomLeftPos, binSize, wallBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
         case "m_wall_5": 
@@ -446,7 +462,7 @@ public class BinGenerator101 : MonoBehaviour
                                                 .Where(key => numBinsWidth.ContainsKey(key))
                                                 .Select(key => numBinsWidth[key])
                                                 .ToArray();
-                        binNum = MazeWallBinning(objname, pos, greenpillartag, BottomLeftPos, binSize, greenPillarBinsWidth, ObjToOffset);
+                        binNum = MazeWallBinning(objname, pos, greenpillartag, BottomLeftPos, binSize, greenPillarBinsWidth, ObjToOffset, numBinsHeight);
                     break;
         
         case "m_wall_21": 
@@ -458,7 +474,7 @@ public class BinGenerator101 : MonoBehaviour
                                                 .Where(key => numBinsWidth.ContainsKey(key))
                                                 .Select(key=> numBinsWidth[key])
                                                 .ToArray();
-                    binNum = MazeWallBinning(objname, pos, bluepillartag, BottomLeftPos, binSize, bluePillarBinsWidth, ObjToOffset);
+                    binNum = MazeWallBinning(objname, pos, bluepillartag, BottomLeftPos, binSize, bluePillarBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
         
         case "m_wall_3": 
@@ -470,7 +486,7 @@ public class BinGenerator101 : MonoBehaviour
                                                .Where(key => numBinsWidth.ContainsKey(key))
                                                .Select(key => numBinsWidth[key])
                                                .ToArray();
-                    binNum = MazeWallBinning(objname, pos, redpillartag, BottomLeftPos, binSize, redPillarBinsWidth, ObjToOffset);
+                    binNum = MazeWallBinning(objname, pos, redpillartag, BottomLeftPos, binSize, redPillarBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
                 
         case "m_wall_20":
@@ -482,7 +498,7 @@ public class BinGenerator101 : MonoBehaviour
                                                   .Where(key => numBinsWidth.ContainsKey(key))
                                                   .Select(key => numBinsWidth[key])
                                                   .ToArray();
-                    binNum = MazeWallBinning(objname, pos, yellowpillartag, BottomLeftPos, binSize, yellowPillarBinsWidth, ObjToOffset);
+                    binNum = MazeWallBinning(objname, pos, yellowpillartag, BottomLeftPos, binSize, yellowPillarBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
                 // Cat Cube Reward
@@ -501,7 +517,7 @@ public class BinGenerator101 : MonoBehaviour
                                               .Where(key => numBinsWidth.ContainsKey(key))
                                               .Select(key => numBinsWidth[key])
                                               .ToArray();
-                    binNum = WallTypeBinning(objname, pos, catPlaneVertical, BottomLeftPos, binSize, catPlaneBinsWidth, ObjToOffset);  
+                    binNum = WallTypeBinning(objname, pos, catPlaneVertical, BottomLeftPos, binSize, catPlaneBinsWidth, ObjToOffset, numBinsHeight);  
                     break; 
 
                 // Pig Cube Reward
@@ -519,7 +535,7 @@ public class BinGenerator101 : MonoBehaviour
                                                .Where(key => numBinsWidth.ContainsKey(key))
                                                .Select(key => numBinsWidth[key])
                                                .ToArray();
-                    binNum = WallTypeBinning(objname, pos, pigPlaneVertical, BottomLeftPos, binSize, pigPlaneBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, pigPlaneVertical, BottomLeftPos, binSize, pigPlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
                 //Crocodile Cube Reward
@@ -537,7 +553,7 @@ public class BinGenerator101 : MonoBehaviour
                                                     .Where(key => numBinsWidth.ContainsKey(key))
                                                     .Select(key => numBinsWidth[key])
                                                     .ToArray();             
-                    binNum = WallTypeBinning(objname, pos, crocodilePlaneVertical, BottomLeftPos, binSize, crocodilePlaneBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, crocodilePlaneVertical, BottomLeftPos, binSize, crocodilePlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
 
                 //Hippo Cube Reward
@@ -555,7 +571,7 @@ public class BinGenerator101 : MonoBehaviour
                                                 .Where(key => numBinsWidth.ContainsKey(key))
                                                 .Select(key => numBinsWidth[key])
                                                 .ToArray();
-                    binNum = WallTypeBinning(objname, pos, hippoPlaneVertical, BottomLeftPos, binSize, hippoPlaneBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, hippoPlaneVertical, BottomLeftPos, binSize, hippoPlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
 
                 // Rabbit Reward Cube
@@ -573,7 +589,7 @@ public class BinGenerator101 : MonoBehaviour
                                                 .Where(key => numBinsWidth.ContainsKey(key))
                                                 .Select(key => numBinsWidth[key])
                                                 .ToArray();
-                    binNum = WallTypeBinning(objname, pos, rabbitPlaneVertical, BottomLeftPos, binSize,rabbitPlaneBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, rabbitPlaneVertical, BottomLeftPos, binSize,rabbitPlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
                 //Fox Cube Reward
@@ -591,7 +607,7 @@ public class BinGenerator101 : MonoBehaviour
                                               .Where(key => numBinsWidth.ContainsKey(key))
                                               .Select(key => numBinsWidth[key])
                                               .ToArray();
-                    binNum = WallTypeBinning(objname, pos, foxPlaneVertical, BottomLeftPos, binSize, foxPlaneBinsWidth, ObjToOffset);
+                    binNum = WallTypeBinning(objname, pos, foxPlaneVertical, BottomLeftPos, binSize, foxPlaneBinsWidth, ObjToOffset,numBinsHeight);
                     break;
 
         default: // Gameobject is not found 
@@ -635,13 +651,13 @@ public class BinGenerator101 : MonoBehaviour
         
     }
 
-    for(int i=0; i< Timestamps.Count; i++ ){
+    /*for(int i=0; i< Timestamps.Count; i++ ){
 
         Debug.Log("Timestamp: " + Timestamps[i] + " " + "Bin Number: " + Binnumbers[i] + " "+ Objecthit[i] + " " + Objecthitpos[i]);
-    }
+    }*/
 
 
-        WriteCSV(Objecthit.ToArray(), Timestamps.ToArray(), Binnumbers.ToArray(), Objecthitpos.ToArray(), OutputFile);
+     WriteCSV(Objecthit.ToArray(), Timestamps.ToArray(), Binnumbers.ToArray(), Objecthitpos.ToArray(), OutputFile);
         
 
 }
@@ -665,60 +681,68 @@ void WriteCSV(string[] objecthit, int[] time, int[] binnum, Vector3[] gazecoordi
     } 
 
 
-public int WallTypeBinning(string objname, Vector3 position, string[] GroupObject, Dictionary<string, Vector3> BottomLeftPos, float binSize, int[] BinsWidth, Dictionary<string, int> ObjToOffset){
-
+public int WallTypeBinning(string objname, Vector3 position, string[] GroupObject, Dictionary<string, Vector3> BottomLeftPos, float binSize, int[] BinsWidth, Dictionary<string, int> ObjToOffset, Dictionary<string, int> BinsHeight){
+        
         if(objname == GroupObject[0]){
             
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[0]];
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
                 int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
-                binNum = binRow* BinsWidth.Sum() + ZBinNum + ObjToOffset[GroupObject[0]];
+                //int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(ZBinNum, 1, BinsWidth[0]);
+                binNum = binRow * BinsWidth.Sum() + binCol + ObjToOffset[GroupObject[0]];
+                
 
         } else if (objname == GroupObject[1]){ 
 
                 ObjToOffset[GroupObject[1]] = ObjToOffset[GroupObject[0]];
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[1]];
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
-                binNum =  binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + ObjToOffset[GroupObject[1]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(XBinNum, 1, BinsWidth[1]);
+                binNum =  binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + ObjToOffset[GroupObject[1]];
            
         } else if(objname == GroupObject[2]){
             
                 ObjToOffset[GroupObject[2]] = ObjToOffset[GroupObject[0]];
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[2]]; 
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
-                binNum = binRow * BinsWidth.Sum() + ZBinNum + BinsWidth[0] + BinsWidth[1] + ObjToOffset[GroupObject[2]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(ZBinNum, 1, BinsWidth[2]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + ObjToOffset[GroupObject[2]];
 
         } else if(objname == GroupObject[3]){
         
                 ObjToOffset[GroupObject[3]] = ObjToOffset[GroupObject[0]];
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[3]];
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
-                binNum = binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + ObjToOffset[GroupObject[3]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(XBinNum, 1, BinsWidth[3]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + ObjToOffset[GroupObject[3]];
 
     }else if(objname == GroupObject[4]){
 
                 ObjToOffset[GroupObject[4]] = ObjToOffset[GroupObject[0]];
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[4]];
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
-                binNum = binRow * BinsWidth.Sum() + ZBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3]+ ObjToOffset[GroupObject[4]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(ZBinNum, 1, BinsWidth[4]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3]+ ObjToOffset[GroupObject[4]];
 
     }else if(objname == GroupObject[5]){
 
                 ObjToOffset[GroupObject[5]] = ObjToOffset[GroupObject[0]];
                 Vector3 distFromBottomLeft = position - BottomLeftPos[GroupObject[5]];
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
-                binNum = binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3] + BinsWidth[4]+ ObjToOffset[GroupObject[5]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(XBinNum, 1, BinsWidth[5]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + BinsWidth[3] + BinsWidth[4]+ ObjToOffset[GroupObject[5]];
 
 
     }
@@ -728,7 +752,7 @@ public int WallTypeBinning(string objname, Vector3 position, string[] GroupObjec
 }
 
 
-public int MazeWallBinning(string objname, Vector3 position, string[] GroupObject, Dictionary<string, Vector3> BottomLeftPos, float binSize, int[] BinsWidth, Dictionary<string, int> ObjToOffset)
+public int MazeWallBinning(string objname, Vector3 position, string[] GroupObject, Dictionary<string, Vector3> BottomLeftPos, float binSize, int[] BinsWidth, Dictionary<string, int> ObjToOffset, Dictionary<string, int> BinsHeight)
     { //Binning for the maze wall uses a different method because it is binned starting from the right corner to the left corner 
       //In this case, the ref position is no longer from the bottom left corner
 
@@ -747,8 +771,9 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
                 Vector3 distFromRef = position - refposition;
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
                 int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.z)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
-                binNum = binRow* BinsWidth.Sum() + ZBinNum + ObjToOffset[GroupObject[0]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(ZBinNum, 1, BinsWidth[0]);
+                binNum = binRow * BinsWidth.Sum() + binCol + ObjToOffset[GroupObject[0]];
 
         } else if (objname == GroupObject[1]){ 
 
@@ -766,9 +791,10 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
 
                 Vector3 distFromRef = position - refposition;
                 int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
                 int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.x)/binSize);
-                binNum =  binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + ObjToOffset[GroupObject[1]];
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(XBinNum, 1, BinsWidth[1]);
+                binNum =  binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + ObjToOffset[GroupObject[1]];
            
         } else if(objname == GroupObject[2]){
             
@@ -785,10 +811,11 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
                 //Debug.Log(refposition + objname);
 
                 Vector3 distFromRef = position - refposition; 
-                int YBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
-                int ZBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.z)/binSize);
-                binNum = binRow * BinsWidth.Sum() + ZBinNum + BinsWidth[0] + BinsWidth[1] + ObjToOffset[GroupObject[2]];
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
+                int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.z)/binSize);
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(ZBinNum, 1, BinsWidth[2]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + ObjToOffset[GroupObject[2]];
 
         } else if(objname == GroupObject[3]){
         
@@ -804,11 +831,12 @@ public int MazeWallBinning(string objname, Vector3 position, string[] GroupObjec
 
                 //Debug.Log(refposition + objname);
 
-                Vector3 distFromBottomLeft = position - refposition;
-                int YBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.y)/binSize);
-                int binRow = Mathf.Max(YBinNum-1 , 0); //Bin Row cannot be negative
-                int XBinNum = Mathf.CeilToInt(Mathf.Abs(refposition.x)/binSize);
-                binNum = binRow * BinsWidth.Sum() + XBinNum + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + ObjToOffset[GroupObject[3]];
+                Vector3 distFromRef = position - refposition;
+                int YBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.y)/binSize);
+                int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromRef.x)/binSize);
+                int binRow = Mathf.Clamp(YBinNum-1, 0, BinsHeight[objname]);
+                int binCol = Mathf.Clamp(XBinNum, 1, BinsWidth[3]);
+                binNum = binRow * BinsWidth.Sum() + binCol + BinsWidth[0] + BinsWidth[1] + BinsWidth[2] + ObjToOffset[GroupObject[3]];
 
         }
 

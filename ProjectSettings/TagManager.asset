@@ -70,6 +70,30 @@ TagManager:
   - Plane_34
   - Plane_35
   - Plane_36
+  - Base_1
+  - Base_2
+  - Base_3
+  - Base_4
+  - Base_5
+  - Base_6
+  - Base_7
+  - Base_8
+  - Base_9
+  - Base_10
+  - Base_11
+  - Base_12
+  - Base_13
+  - Base_14
+  - Base_15
+  - Base_16
+  - Base_17
+  - Base_18
+  - Base_19
+  - Base_20
+  - Base_21
+  - Base_22
+  - Base_23
+  - Base_24
   layers:
   - Default
   - TransparentFX

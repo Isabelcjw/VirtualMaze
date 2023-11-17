@@ -35,16 +35,22 @@ public class BinGenerator101 : MonoBehaviour
    private string[] yellowpillartag; 
    private string[] catPlaneVertical; 
    private string[] catPlaneHorizontal; 
+   private string[] catbase;
    private string[] pigPlaneHorizontal; 
    private string[] pigPlaneVertical; 
+   private string[] pigbase;
    private string[] crocodilePlaneHorizontal; 
    private string[] crocodilePlaneVertical; 
+   private string[] crocodilebase;
    private string[] hippoPlaneHorizontal; 
    private string[] hippoPlaneVertical; 
+   private string[] hippobase; 
    private string[] rabbitPlaneHorizontal;
    private string[] rabbitPlaneVertical; 
+   private string[] rabbitbase;
    private string[] foxPlaneHorizontal; 
    private string[] foxPlaneVertical; 
+   private string[] foxbase; 
 
    //stores all data excluding "Sampled Ignored" data 
    private List<string[]> csvData = new List<string[]>();
@@ -79,16 +85,22 @@ public class BinGenerator101 : MonoBehaviour
     yellowpillartag = new string [] {"m_wall_20", "m_wall_12", "m_wall_8", "m_wall_7"};
     catPlaneHorizontal = new string[] {"Plane_1", "Plane_2"};
     catPlaneVertical = new string[] { "Plane_3", "Plane_4", "Plane_5", "Plane_6"};
+    catbase = new string[] {"Base_1", "Base_2", "Base_3", "Base_4"};
     pigPlaneHorizontal = new string[] { "Plane_7", "Plane_8"};
     pigPlaneVertical = new string[] {"Plane_9", "Plane_10", "Plane_11", "Plane_12"};
+    pigbase = new string[] {"Base_5" , "Base_6", "Base_7", "Base_8"}; 
     crocodilePlaneHorizontal = new string[] {"Plane_13", "Plane_14"};
     crocodilePlaneVertical = new string[] { "Plane_15", "Plane_16", "Plane_17", "Plane_18"};
+    crocodilebase = new string[] {"Base_9", "Base_10", "Base_11", "Base_12"};
     hippoPlaneHorizontal = new string[] {"Plane_19", "Plane_20"};
     hippoPlaneVertical = new string[] {"Plane_21", "Plane_22", "Plane_23", "Plane_24"};
+    hippobase = new string[] {"Base_13", "Base_14", "Base_15", "Base_16"};
     rabbitPlaneHorizontal =new string[] {"Plane_25", "Plane_26"};
     rabbitPlaneVertical = new string[] {"Plane_27", "Plane_28", "Plane_29", "Plane_30"};
+    rabbitbase = new string[] {"Base_17", "Base_18", "Base_19", "Base_20"};
     foxPlaneHorizontal = new string[] {"Plane_31", "Plane_32"};
     foxPlaneVertical = new string[] {"Plane_33", "Plane_34", "Plane_35", "Plane_36"};
+    foxbase = new string[] {"Base_21", "Base_22", "Base_23", "Base_24"};
     
     ObjInScene.Add(Ground);
     ObjInScene.Add(Ceiling);
@@ -99,16 +111,22 @@ public class BinGenerator101 : MonoBehaviour
     ObjInScene.Add(yellowpillartag);
     ObjInScene.Add(catPlaneHorizontal);
     ObjInScene.Add(catPlaneVertical);
+    ObjInScene.Add(catbase);
     ObjInScene.Add(pigPlaneHorizontal);
     ObjInScene.Add(pigPlaneVertical);
+    ObjInScene.Add(pigbase);
     ObjInScene.Add(crocodilePlaneHorizontal);
     ObjInScene.Add(crocodilePlaneVertical);
+    ObjInScene.Add(crocodilebase);
     ObjInScene.Add(hippoPlaneHorizontal);
     ObjInScene.Add(hippoPlaneVertical);
+    ObjInScene.Add(hippobase);
     ObjInScene.Add(rabbitPlaneHorizontal);
     ObjInScene.Add(rabbitPlaneVertical);
+    ObjInScene.Add(rabbitbase);
     ObjInScene.Add(foxPlaneHorizontal);
     ObjInScene.Add(foxPlaneVertical);
+    ObjInScene.Add(foxbase);
 
     foreach(string[] obj in ObjInScene){
 
@@ -183,7 +201,7 @@ public class BinGenerator101 : MonoBehaviour
         }
 
         ObjOffset.Add(Offset);
-        //Debug.Log(obj.name + " " + Offset + " " + numBinsY + numBinsZ + numBinsX);
+        //Debug.Log(obj.name + " " + Offset);
     
        }
 
@@ -193,29 +211,29 @@ public class BinGenerator101 : MonoBehaviour
 
      ReadCSVFile(InputFile);
 
-    /*foreach(KeyValuePair <string, int> kvp in ObjToOffset){
+    foreach(KeyValuePair <string, int> kvp in ObjToOffset){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }
 
 
     /*foreach(KeyValuePair <string, Vector3> kvp in BottomLeftPos){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
-    }
+    }*/
 
 
-    foreach(KeyValuePair <string, float> kvp in ObjLength){
+    /*foreach(KeyValuePair <string, float> kvp in ObjLength){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }*/
 
     /*foreach(KeyValuePair <string, int> kvp in numBinsHeight){
 
         Debug.Log("Key: " + kvp.Key + " " + " Value: " + kvp.Value);
-    }
+    }*/
 
     foreach(KeyValuePair <string, int> kvp in numBinsWidth){
 
         Debug.Log("Key: " + kvp.Key + " " + " Value: " + kvp.Value);
-    }*/
+    }
 
 
     }
@@ -435,7 +453,9 @@ public class BinGenerator101 : MonoBehaviour
         case "Ceiling": 
                     int XBinNum = Mathf.CeilToInt(Mathf.Abs(pos.x - BottomLeftPos["Ceiling"].x)/binSize);
                     int ZBinNum = Mathf.CeilToInt(Mathf.Abs(pos.z - BottomLeftPos["Ceiling"].z)/binSize);
-                    binNum = (numBinsWidth["Ceiling"] - ZBinNum) * numBinsWidth["Ceiling"] + XBinNum + ObjToOffset["Ceiling"];
+                    int binRow = Mathf.Clamp(ZBinNum, 0, numBinsWidth["Ceiling"]);
+                    int binCol = Mathf.Clamp(XBinNum, 1, numBinsWidth["Ceiling"]);
+                    binNum = (numBinsWidth["Ceiling"] - binRow) * numBinsWidth["Ceiling"] + binCol + ObjToOffset["Ceiling"];
                     break;
 
         case "wall_01":
@@ -520,6 +540,17 @@ public class BinGenerator101 : MonoBehaviour
                     binNum = WallTypeBinning(objname, pos, catPlaneVertical, BottomLeftPos, binSize, catPlaneBinsWidth, ObjToOffset, numBinsHeight);  
                     break; 
 
+        case "Base_1": 
+        case "Base_2": 
+        case "Base_3": 
+        case "Base_4": 
+                    int[] catbaseBinsWidth = catbase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, catbase, BottomLeftPos, binSize, catbaseBinsWidth, ObjToOffset, numBinsHeight);
+                    break;
+
                 // Pig Cube Reward
         case "Plane_7": 
                     binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_7"], ObjToOffset);
@@ -536,6 +567,17 @@ public class BinGenerator101 : MonoBehaviour
                                                .Select(key => numBinsWidth[key])
                                                .ToArray();
                     binNum = WallTypeBinning(objname, pos, pigPlaneVertical, BottomLeftPos, binSize, pigPlaneBinsWidth, ObjToOffset, numBinsHeight);
+                    break;
+
+        case "Base_5": 
+        case "Base_6": 
+        case "Base_7": 
+        case "Base_8": 
+                    int[] pigbaseBinsWidth = pigbase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, pigbase, BottomLeftPos, binSize, pigbaseBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
                 //Crocodile Cube Reward
@@ -555,6 +597,16 @@ public class BinGenerator101 : MonoBehaviour
                                                     .ToArray();             
                     binNum = WallTypeBinning(objname, pos, crocodilePlaneVertical, BottomLeftPos, binSize, crocodilePlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
+        case "Base_9": 
+        case "Base_10": 
+        case "Base_11": 
+        case "Base_12": 
+                    int[] crocodilebaseBinsWidth = crocodilebase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, crocodilebase, BottomLeftPos, binSize, crocodilebaseBinsWidth, ObjToOffset, numBinsHeight);
+                    break;
 
                 //Hippo Cube Reward
         case "Plane_19": 
@@ -573,6 +625,16 @@ public class BinGenerator101 : MonoBehaviour
                                                 .ToArray();
                     binNum = WallTypeBinning(objname, pos, hippoPlaneVertical, BottomLeftPos, binSize, hippoPlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break; 
+        case "Base_13": 
+        case "Base_14": 
+        case "Base_15": 
+        case "Base_16": 
+                    int[] hippobaseBinsWidth = hippobase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, hippobase, BottomLeftPos, binSize, hippobaseBinsWidth, ObjToOffset, numBinsHeight);
+                    break;
 
                 // Rabbit Reward Cube
         case "Plane_25": 
@@ -592,6 +654,17 @@ public class BinGenerator101 : MonoBehaviour
                     binNum = WallTypeBinning(objname, pos, rabbitPlaneVertical, BottomLeftPos, binSize,rabbitPlaneBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
+        case "Base_17": 
+        case "Base_18": 
+        case "Base_19": 
+        case "Base_20": 
+                    int[] rabbitbaseBinsWidth = rabbitbase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, rabbitbase, BottomLeftPos, binSize, rabbitbaseBinsWidth, ObjToOffset, numBinsHeight);
+                    break;
+
                 //Fox Cube Reward
         case "Plane_31": 
                     binNum = PlaneTypeBinning(objname, pos, binSize, numBinsWidth["Plane_31"], ObjToOffset);
@@ -608,6 +681,16 @@ public class BinGenerator101 : MonoBehaviour
                                               .Select(key => numBinsWidth[key])
                                               .ToArray();
                     binNum = WallTypeBinning(objname, pos, foxPlaneVertical, BottomLeftPos, binSize, foxPlaneBinsWidth, ObjToOffset,numBinsHeight);
+                    break;
+        case "Base_21": 
+        case "Base_22": 
+        case "Base_23": 
+        case "Base_24": 
+                    int[] foxbaseBinsWidth = foxbase
+                                         .Where(key => numBinsWidth.ContainsKey(key))
+                                         .Select(key=> numBinsWidth[key])
+                                         .ToArray(); 
+                    binNum = WallTypeBinning(objname, pos, foxbase, BottomLeftPos, binSize, foxbaseBinsWidth, ObjToOffset, numBinsHeight);
                     break;
 
         default: // Gameobject is not found 
@@ -851,8 +934,10 @@ public int PlaneTypeBinning(string objname, Vector3 pos, float binSize, int Obje
         Vector3 distFromBottomLeft = pos - BottomLeftPos[objname];
         int XBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.x)/binSize);
         int ZBinNum = Mathf.CeilToInt(Mathf.Abs(distFromBottomLeft.z)/binSize);
-        int binRow = Mathf.Max(ZBinNum-1 , 0); //Bin Row cannot be negative
-        binNum = binRow * ObjectWidth + XBinNum + ObjToOffset[objname];
+        //int binRow = Mathf.Max(ZBinNum-1 , 0); //Bin Row cannot be negative
+        int binRow = Mathf.Clamp(ZBinNum-1, 0, ObjectWidth);
+        int binCol = Mathf.Clamp(XBinNum, 1, ObjectWidth);
+        binNum = binRow * ObjectWidth + binCol + ObjToOffset[objname];
 
         return binNum; 
 

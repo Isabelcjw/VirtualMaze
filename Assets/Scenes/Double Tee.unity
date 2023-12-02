@@ -1053,7 +1053,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: RabitPoster
       objectReference: {fileID: 0}
     - target: {fileID: 2472647010858284900, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
@@ -2284,7 +2284,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: CrocodilePoster
       objectReference: {fileID: 0}
     - target: {fileID: 2472647010858284900, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
@@ -4835,7 +4835,6 @@ GameObject:
   - component: {fileID: 1199549817}
   - component: {fileID: 1199549816}
   - component: {fileID: 1199549815}
-  - component: {fileID: 1199549814}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -4843,25 +4842,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1199549814
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1199549813}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a603fe7f6bb5de47ad91bebf92766f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  numOfBinsForFloorLength: 30
-  FloorLength: 25
-  OutputFile: /Users/isabelchang/Documents/Raycast output bindata/Bindata(origmaze20181101)/picasso-misc
-    (orig data)/30
-  InputFile: /Users/isabelchang/Documents/Raycast output bindata/Bindata(origmaze20181101)/picasso-misc
-    (orig data)/25/unityfile_eyelink.csv
 --- !u!81 &1199549815
 AudioListener:
   m_ObjectHideFlags: 0
@@ -5036,7 +5016,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: DonkeyPoster
       objectReference: {fileID: 0}
     - target: {fileID: 2472647010858284900, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
@@ -5326,14 +5306,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1393995871}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -12.5, y: 4.93, z: 12.5}
-  m_LocalScale: {x: 0.8333, y: 0.8333, z: 0.8333}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -12.3, y: 0, z: -12.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 992543065}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!483693784 &1393995873
 TilemapRenderer:
   m_ObjectHideFlags: 0
@@ -5399,7 +5379,7 @@ Tilemap:
   m_TileColorArray: []
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.29803923, g: 0.29803923, b: 0.29803923, a: 1}
   m_Origin: {x: 0, y: 0, z: 0}
   m_Size: {x: 0, y: 0, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
@@ -6357,7 +6337,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: CamelPoster
       objectReference: {fileID: 0}
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
@@ -7420,7 +7400,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: PigPoster
       objectReference: {fileID: 0}
     - target: {fileID: 2472647010858284900, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
@@ -7717,7 +7697,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1912782312}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.319, y: 4.93, z: -10.747}
+  m_LocalPosition: {x: -12.4, y: 0.155, z: -6.074}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7749,7 +7729,7 @@ PrefabInstance:
     - target: {fileID: 1936230905976871848, guid: aa1b4192074926247b9711507173d20f,
         type: 3}
       propertyPath: m_Name
-      value: Poster
+      value: CatPoster
       objectReference: {fileID: 0}
     - target: {fileID: 2472647010858284900, guid: aa1b4192074926247b9711507173d20f,
         type: 3}

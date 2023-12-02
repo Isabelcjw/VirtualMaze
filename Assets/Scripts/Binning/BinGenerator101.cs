@@ -1,3 +1,15 @@
+using Eyelink.Structs;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Jobs;
+using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -7,11 +19,13 @@ using System;
 using System.Globalization;
 using Unity.Jobs;
 using System.Runtime.InteropServices;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 
 public class BinGenerator101 : MonoBehaviour
 {  
-   public Camera mainCamera;
+
    private List<GameObject> AllObjects = new List<GameObject>();
    private List<int> ObjOffset = new List<int>();
    private Dictionary<string, int> ObjToOffset = new Dictionary<string, int>();
@@ -23,10 +37,15 @@ public class BinGenerator101 : MonoBehaviour
    private Dictionary<string,Vector3> BottomLeftPos = new Dictionary<string, Vector3>();
    private Dictionary<string, int> numBinsWidth = new Dictionary<string, int>();
    private List <string[]> ObjInScene = new List<string[]>();
-   public int numOfBinsForFloorLength; //Default 40 
-   public float FloorLength; // 25 unity units
-   public string OutputFile;
-   public string InputFile;
+
+   [SerializeField]
+   private InputField numOfBinsForFloorLength; //Default 40 
+   private float FloorLength = 25f; // 25 unity units
+   public InputField OutputFileField;
+   public InputField InputFileField;
+   public TMP_Dropdown sceneDropdown;
+   public Slider progressbar;
+
 
    private string[] walltag;
    private string[] greenpillartag;
@@ -57,21 +76,61 @@ public class BinGenerator101 : MonoBehaviour
    private List<string> Objects = new List<string>();
    private List<Vector3> Gazecoordinates = new List<Vector3>();
    private List<int> Timestamp = new List<int>();
-   
-   //stores data of objects within the radius density after raycasting 
-   private List<int> AllTimestamps = new List<int>();
-   private List<string> AllObjecthit = new List<string>();
-   private List<Vector3> AllObjecthitpos = new List<Vector3>();
 
    //stores data of filtered bin numbers 
    private List<int> Binnumbers = new List<int>();
    private List<int> Timestamps = new List<int>();
    private List<string> Objecthit = new List<string>();
    private List<Vector3> Objecthitpos = new List<Vector3>();
+   private string objname;
+   private int timestamp;
+   private string selectedScene;
 
-   
-    // Start is called before the first frame update
-    void Start()
+
+
+
+   public void LoadSelectedScene(int value){
+
+    selectedScene = sceneDropdown.options[sceneDropdown.value].text;
+    SceneManager.LoadScene(selectedScene);
+    Debug.Log("Scene Loaded");
+       
+    }
+
+    public void OnSubmit(){
+
+        if(string.IsNullOrEmpty(InputFileField.text) || !InputFileField.text.EndsWith("unityfile_eyelink.csv")){
+
+            Console.Write("Input File Path in the correct format is required.");
+        }else if (string.IsNullOrEmpty(OutputFileField.text)){
+
+            Console.Write("Ouput File Path is required.");
+        }else if (string.IsNullOrEmpty(numOfBinsForFloorLength.text)){
+
+            Console.Write("Number of bins for floor length is required.");
+        }else if(sceneDropdown.options[sceneDropdown.value].text == "No Scene Selected"){
+
+            Console.Write("A selected scene is required.");
+        }else{
+            
+            
+            StartCoroutine(ProcessingCoroutine());
+        }
+
+    
+    }
+
+    IEnumerator ProcessingCoroutine()
+    {
+       Console.Write("Start Processing. It may take awhile.");
+       yield return new WaitForSeconds(2f);
+       StartBinGenerator();
+       Console.Write("Finished Processing");
+       
+      
+    }
+
+    public void StartBinGenerator()
     {
 
     // Tags to search for
@@ -140,7 +199,9 @@ public class BinGenerator101 : MonoBehaviour
       }
     }
 
-    binSize = FloorLength/numOfBinsForFloorLength;
+
+    int.TryParse(numOfBinsForFloorLength.text, out int numofbins);
+    binSize = FloorLength/numofbins;
 
     ObjOffset.Add(2); //Cue and Hint Image 
     Offset = 2;
@@ -209,8 +270,9 @@ public class BinGenerator101 : MonoBehaviour
 
     }
 
-     ReadCSVFile(InputFile);
-
+     ReadCSVFile();
+     
+     // The following code here are used for troubleshooting 
     foreach(KeyValuePair <string, int> kvp in ObjToOffset){
         Debug.Log("Key: "+ kvp.Key + " "+ "Value: " + kvp.Value);
     }
@@ -240,8 +302,9 @@ public class BinGenerator101 : MonoBehaviour
 
 
 
-    private void ReadCSVFile(string file)
+    public void ReadCSVFile()
     {
+         string file = InputFileField.text;
 
            if (!File.Exists(file)){
             Debug.LogError("CSV file not found!");
@@ -428,10 +491,42 @@ public class BinGenerator101 : MonoBehaviour
 
     private void BinComputation(List<string> AllObjectname, List<Vector3> AllCoordinates, List<int> AllTimestamps){
 
+     string OutputFile = OutputFileField.text;
+
      for(int i =0; i<AllTimestamps.Count; i++){
 
-        string objname = AllObjectname[i];
-        int timestamp = AllTimestamps[i];
+        if(AllObjectname[i] == "CatPoster"){ // this section of code is not required if the Posters in double tee are set to 'Ignore Raycast'
+
+            objname = "m_wall_10";
+
+        }else if(AllObjectname[i] == "CamelPoster"){
+
+            objname = "m_wall_20";
+
+        }else if(AllObjectname[i] == "RabitPoster"){
+
+            objname = "m_wall_25";
+
+        } else if(AllObjectname[i] == "DonkeyPoster"){
+            
+            objname = "m_wall_15";
+
+        }else if(AllObjectname[i] == "CrocodilePoster"){
+
+            objname = "m_wall_4";
+
+        }else if(AllObjectname[i] == "PigPoster"){
+
+            objname = "m_wall_29";
+        }
+        
+        else{
+
+        objname = AllObjectname[i];
+
+        }
+
+        timestamp = AllTimestamps[i];
         float xcoordinate = Mathf.Round(AllCoordinates[i].x * 1000f)/1000f;
         float ycoordinate = Mathf.Round(AllCoordinates[i].y * 1000f)/1000f;
         float zcoordinate = Mathf.Round(AllCoordinates[i].z * 1000f)/1000f;
@@ -942,6 +1037,17 @@ public int PlaneTypeBinning(string objname, Vector3 pos, float binSize, int Obje
         return binNum; 
 
 }
+
+private IEnumerator PrepareScene(string sceneName) {
+        if (!SceneManager.GetActiveScene().name.Equals(sceneName)) {
+            AsyncOperation opr = SceneManager.LoadSceneAsync(sceneName);
+
+            while (!opr.isDone) {
+                yield return null;
+            }
+        }
+}
+
 
 
 }

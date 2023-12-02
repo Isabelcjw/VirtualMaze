@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// TODO cancel button
@@ -54,6 +55,9 @@ public class ScreenSaver : BasicGUIController {
     [SerializeField]
     private InputField densityInput = null;
 
+    [SerializeField]
+    private InputField InputFile = null;
+
     public Text sessionInfo;
 
     public GazePointPool gazePointPool;
@@ -68,6 +72,7 @@ public class ScreenSaver : BasicGUIController {
 
     public RectTransform GazeCanvas;
     public Slider progressBar;
+    public TMP_Dropdown sceneDropdown;
 
     private void Awake() {
         eyeLinkFileInput.OnPathSelected.AddListener(ChooseEyelinkFile);
@@ -124,7 +129,7 @@ public class ScreenSaver : BasicGUIController {
             return;
         }
 
-        Debug.Log(numberOfLengthBins);
+        //Debug.Log(numberOfLengthBins);
 
         int gazeRadius = 50;
         if (string.IsNullOrEmpty(gazeRadiusInput.text)) {
@@ -144,7 +149,7 @@ public class ScreenSaver : BasicGUIController {
             return;
         }
 
-        BinMapper mapper = new DoubleTeeBinMapper(numberOfLengthBins);
+        BinMapper mapper = new DoubleTeeBinMapper(numberOfLengthBins); //This line is not necessary if using the BinGenerator101
         BinWallManager.ReconfigureGazeOffsetCache(gazeRadius, density);
         StartCoroutine(ProcessSessionDataTask(sessionInput.text, eyeLinkFileInput.text, folderInput.text, mapper));
     }
@@ -203,6 +208,7 @@ public class ScreenSaver : BasicGUIController {
     }
 
     private IEnumerator PrepareScene(string sceneName) {
+
         if (!SceneManager.GetActiveScene().name.Equals(sceneName)) {
             AsyncOperation opr = SceneManager.LoadSceneAsync(sceneName);
 
@@ -249,7 +255,9 @@ public class ScreenSaver : BasicGUIController {
         cueController.UpdatePosition(robot);
         Physics.SyncTransforms();
 
-        yield return PrepareScene("Double Tee");
+        string sceneName = sceneDropdown.options[sceneDropdown.value].text;
+        yield return PrepareScene(sceneName);
+        //yield return PrepareScene("Double Tee");
 
         string filename = $"{Path.GetFileNameWithoutExtension(sessionPath)}_{Path.GetFileNameWithoutExtension(edfPath)}.csv";
 
